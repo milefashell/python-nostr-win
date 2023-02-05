@@ -1,6 +1,6 @@
 import secrets
 import base64
-import secp256k1
+import coincurve
 from cffi import FFI
 from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
 from cryptography.hazmat.primitives import padding
@@ -23,8 +23,8 @@ class PublicKey:
         return self.raw_bytes.hex()
 
     def verify_signed_message_hash(self, hash: str, sig: str) -> bool:
-        pk = secp256k1.PublicKey(b"\x02" + self.raw_bytes, True)
-        return pk.schnorr_verify(bytes.fromhex(hash), bytes.fromhex(sig), None, True)
+        pk = coincurve.PublicKeyXOnly(b"\x02" + self.raw_bytes)
+        return pk.verify(bytes.fromhex(hash), bytes.fromhex(sig))
 
     @classmethod
     def from_npub(cls, npub: str):
@@ -41,8 +41,8 @@ class PrivateKey:
         else:
             self.raw_secret = secrets.token_bytes(32)
 
-        sk = secp256k1.PrivateKey(self.raw_secret)
-        self.public_key = PublicKey(sk.pubkey.serialize()[1:])
+        sk = coincurve.PrivateKey(self.raw_secret)
+        self.public_key = PublicKey(sk.public_key_xonly.format())
 
     @classmethod
     def from_nsec(cls, nsec: str):
@@ -59,12 +59,13 @@ class PrivateKey:
         return self.raw_secret.hex()
 
     def tweak_add(self, scalar: bytes) -> bytes:
-        sk = secp256k1.PrivateKey(self.raw_secret)
-        return sk.tweak_add(scalar)
+        sk = coincurve.PrivateKey(self.raw_secret)
+        return sk.add(scalar)
 
     def compute_shared_secret(self, public_key_hex: str) -> bytes:
-        pk = secp256k1.PublicKey(bytes.fromhex("02" + public_key_hex), True)
-        return pk.ecdh(self.raw_secret, hashfn=copy_x)
+        pub_raw_key = bytes.fromhex("02" + public_key_hex)
+        pk = coincurve.PrivateKey(self.raw_secret)
+        return pk.ecdh(pub_raw_key)
 
     def encrypt_message(self, message: str, public_key_hex: str) -> str:
         padder = padding.PKCS7(128).padder()
@@ -98,8 +99,8 @@ class PrivateKey:
         return unpadded_data.decode()
 
     def sign_message_hash(self, hash: bytes) -> str:
-        sk = secp256k1.PrivateKey(self.raw_secret)
-        sig = sk.schnorr_sign(hash, None, raw=True)
+        sk = coincurve.PrivateKey(self.raw_secret)
+        sig = sk.sign_schnorr(hash)
         return sig.hex()
 
     def sign_event(self, event: Event) -> None:

@@ -3,7 +3,7 @@ import json
 from dataclasses import dataclass, field
 from enum import IntEnum
 from typing import List
-from secp256k1 import PublicKey
+from coincurve import PublicKeyXOnly
 from hashlib import sha256
 
 from . import bech32
@@ -75,9 +75,12 @@ class Event:
 
 
     def verify(self) -> bool:
-        pub_key = PublicKey(bytes.fromhex("02" + self.public_key), True)  # add 02 for schnorr (bip340)
-        return pub_key.schnorr_verify(bytes.fromhex(self.id), bytes.fromhex(self.signature), None, raw=True)
-
+        pub_key = PublicKeyXOnly(bytes.fromhex(self.public_key))
+        try:
+            result = pub_key.verify(bytes.fromhex(self.signature), bytes.fromhex(self.id))
+        except:
+            result = False
+        return result
 
     def to_message(self) -> str:
         return json.dumps(
