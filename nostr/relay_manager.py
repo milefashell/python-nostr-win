@@ -12,10 +12,8 @@ from .relay import Relay, RelayPolicy, RelayProxyConnectionConfig
 from .request import Request
 
 
-
 class RelayException(Exception):
     pass
-
 
 
 @dataclass
@@ -56,6 +54,9 @@ class RelayManager:
                 relay = self.relays.pop(url)
                 relay.close()
 
+    def remove_all_relays(self):
+        self.relays: dict[str, Relay] = {}
+
     def add_subscription_on_relay(self, url: str, id: str, filters: Filters):
         with self.lock:
             if url in self.relays:
@@ -66,7 +67,7 @@ class RelayManager:
                 request = Request(id, filters)
                 relay.publish(request.to_message())
             else:
-                raise RelayException(f"Invalid relay url: no connection to {url}") 
+                raise RelayException(f"Invalid relay url: no connection to {url}")
 
     def add_subscription_on_all_relays(self, id: str, filters: Filters):
         with self.lock:

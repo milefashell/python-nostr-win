@@ -10,7 +10,6 @@ from . import bech32
 from .message_type import ClientMessageType
 
 
-
 class EventKind(IntEnum):
     SET_METADATA = 0
     TEXT_NOTE = 1
@@ -18,7 +17,12 @@ class EventKind(IntEnum):
     CONTACTS = 3
     ENCRYPTED_DIRECT_MESSAGE = 4
     DELETE = 5
-
+    REACTION = 7
+    CHANNEL_CREATE = 40
+    CHANNEL_METADATA = 41
+    CHANNEL_MESSAGE = 42
+    CHANNEL_HIDE_MESSAGE = 43
+    CHANNEL_MUTE_USER = 44
 
 
 @dataclass
@@ -29,6 +33,7 @@ class Event:
     kind: int = EventKind.TEXT_NOTE
     tags: List[List[str]] = field(default_factory=list)  # Dataclasses require special handling when the default value is a mutable type
     signature: str = None
+    received_id: str = None
 
 
     def __post_init__(self):

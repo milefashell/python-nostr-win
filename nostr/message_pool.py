@@ -4,21 +4,25 @@ from threading import Lock
 from .message_type import RelayMessageType
 from .event import Event
 
+
 class EventMessage:
     def __init__(self, event: Event, subscription_id: str, url: str) -> None:
         self.event = event
         self.subscription_id = subscription_id
         self.url = url
 
+
 class NoticeMessage:
     def __init__(self, content: str, url: str) -> None:
         self.content = content
         self.url = url
 
+
 class EndOfStoredEventsMessage:
     def __init__(self, subscription_id: str, url: str) -> None:
         self.subscription_id = subscription_id
         self.url = url
+
 
 class MessagePool:
     def __init__(self) -> None:
@@ -64,9 +68,8 @@ class MessagePool:
                 e["sig"],
             )
             with self.lock:
-                if not event.id in self._unique_events:
-                    self.events.put(EventMessage(event, subscription_id, url))
-                    self._unique_events.add(event.id)
+                self.events.put(EventMessage(event, subscription_id, url))
+                self._unique_events.add(event.id)
         elif message_type == RelayMessageType.NOTICE:
             self.notices.put(NoticeMessage(message_json[1], url))
         elif message_type == RelayMessageType.END_OF_STORED_EVENTS:

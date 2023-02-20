@@ -11,6 +11,7 @@ from .message_pool import MessagePool
 from .message_type import RelayMessageType
 from .subscription import Subscription
 
+
 @dataclass
 class RelayPolicy:
     should_read: bool = True
@@ -18,8 +19,6 @@ class RelayPolicy:
     
     def to_json_object(self) -> dict[str, bool]:
         return {"read": self.should_read, "write": self.should_write}
-
-
 
 
 @dataclass
@@ -58,7 +57,7 @@ class Relay:
     def connect(self):
         self.ws.run_forever(
             sslopt=self.ssl_options,
-            http_proxy_host=self.proxy_config.host if self.proxy_config is not None else None, 
+            http_proxy_host=self.proxy_config.host if self.proxy_config is not None else None,
             http_proxy_port=self.proxy_config.port if self.proxy_config is not None else None,
             proxy_type=self.proxy_config.type if self.proxy_config is not None else None,
         )
@@ -78,7 +77,7 @@ class Relay:
 
     def publish(self, message: str):
         self.queue.put(message)
-        
+
     def queue_worker(self):
         while True:
             if self.connected:
@@ -122,7 +121,7 @@ class Relay:
 
     def _on_message(self, class_obj, message: str):
         self.message_pool.add_message(message, self.url)
-    
+
     def _on_error(self, class_obj, error):
         self.connected = False
         self.error_counter += 1
